@@ -2,20 +2,28 @@
 require('dotenv').config();
 const { exec } = require('child_process');
 
-const LOOP_DELAY_MINUTES = parseInt(process.env.LOOP_DELAY_MINUTES || 10);
+const MIN_LOOP = 3;  // in minutes
+const MAX_LOOP = 8;  // in minutes
 
-console.log(`[🔁] Starting scheduler: running ghostbot every ${LOOP_DELAY_MINUTES} minutes...\n`);
+function getRandomDelayMs() {
+  const minutes = Math.floor(Math.random() * (MAX_LOOP - MIN_LOOP + 1)) + MIN_LOOP;
+  console.log(`[⏱] Next run in ${minutes} minutes...\n`);
+  return minutes * 60 * 1000;
+}
 
-const runGhost = () => {
+function runGhost() {
   exec('node ghostbot.js', (err, stdout, stderr) => {
     if (err) {
-      console.error(`[💥] Bot error: ${err.message}`);
+      console.error(`[💥] Ghostbot failed: ${err.message}`);
       return;
     }
     console.log(stdout);
     console.error(stderr);
-  });
-};
 
-runGhost();
-setInterval(runGhost, LOOP_DELAY_MINUTES * 60 * 1000);
+    // Schedule next run
+    setTimeout(runGhost, getRandomDelayMs());
+  });
+}
+
+console.log(`[🔁] Ghost Scheduler initiated (3–8 min random loop)`);
+runGhost();  // First run
