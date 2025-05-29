@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["libgtk-3", "chromium", "libxss", "libnss"]
+
+[phases.install]
+cmds = ["npm install --omit=dev"]
+
+[phases.start]
+cmd = "node scheduler.js"
