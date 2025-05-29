@@ -1,11 +1,9 @@
-FROM node:20
+FROM node:18-slim
 
+# Set working directory
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install puppeteer@22.8.2 --save
-
-# Add puppeteer headless dependencies
+# Install Puppeteer dependencies
 RUN apt-get update && apt-get install -y \
   fonts-liberation \
   libnss3 \
@@ -13,8 +11,11 @@ RUN apt-get update && apt-get install -y \
   xdg-utils \
   --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
+# Copy files
 COPY . .
 
-EXPOSE 3000
+# Install dependencies
+RUN npm install
 
+# Start the app
 CMD ["node", "scheduler.js"]
