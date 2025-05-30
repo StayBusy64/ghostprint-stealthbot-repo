@@ -1,35 +1,39 @@
-# 1. Start with a valid base image
+# Use an official slim Node.js image as the base
 FROM node:18-slim
 
-# 2. Set working directory inside container
+# Set the working directory inside the container
 WORKDIR /app
 
-# 3. Install required system packages for Puppeteer
+# Install required dependencies for Puppeteer to run in headless mode
 RUN apt-get update && apt-get install -y \
-  fonts-liberation \
-  libnss3 \
-  libxss1 \
-  libasound2 \
-  libatk-bridge2.0-0 \
-  libgtk-3-0 \
-  libdrm2 \
-  libgbm1 \
-  xdg-utils \
-  wget \
-  ca-certificates \
-  --no-install-recommends && rm -rf /var/lib/apt/lists/*
+    fonts-liberation \
+    libnss3 \
+    libxss1 \
+    xdg-utils \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    libdrm2 \
+    libgbm1 \
+    wget \
+    ca-certificates \
+    --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# 4. Copy only package files first for layer caching
+# Copy only the package.json files first for Docker layer caching
 COPY package*.json ./
 
-# 5. Install only production dependencies
+# Install only production dependencies for performance
 RUN npm ci --only=production && npm cache clean --force
 
-# 6. Copy the rest of your codebase
+# Copy the rest of the source code
 COPY . .
 
-# 7. Tell Docker what port to expose (if your bot needs this)
+# Expose a port (optional – for healthcheck, webhook server, etc.)
 EXPOSE 3000
 
-# 8. Actually run your bot
+# Optional: Add a health check to make sure the bot stays alive
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000', res => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
+
+# Default command to start the viewbot scheduler
 CMD ["node", "scheduler.js"]
