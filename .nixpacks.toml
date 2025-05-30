@@ -1,8 +1,22 @@
+[variables]
+NIXPACKS_NO_MUSL = "1"
+
 [phases.setup]
-nixPkgs = ["libgtk-3", "chromium", "libxss", "libnss"]
+nixPkgs = [
+  "nodejs-18_x",
+  "chromium",
+  "nss",
+  "freetype",
+  "harfbuzz",
+  "ca-certificates",
+  "ttf-freefont"
+]
 
 [phases.install]
-cmds = ["npm install --omit=dev"]
+cmds = ["npm ci --only=production"]
 
-[phases.start]
-cmd = "node scheduler.js"
+[phases.build]
+cmds = ["echo 'No build step required'"]
+
+[start]
+cmd = "node server.js"
