@@ -1,15 +1,16 @@
 {
-  "name": "ghostprint-stealthbot",
+  "name": "tbot-swarm",
   "version": "1.0.0",
-  "main": "scheduler.js",
-  "type": "module",
+  "description": "GhostPrint T-BOTS for StayBusy64",
+  "main": "ghostbot.js",
   "scripts": {
-    "start": "node scheduler.js"
+    "start": "node ghostbot.js"
   },
+  "type": "module",
   "dependencies": {
-    "puppeteer": "^21.3.8",
-    "axios": "^1.6.7",
-    "dotenv": "^16.4.5",
-    "fs-extra": "^11.2.0"
+    "puppeteer-core": "^21.3.8",
+    "puppeteer-extra": "^3.3.4",
+    "puppeteer-extra-plugin-stealth": "^2.11.1",
+    "dotenv": "^16.3.1"
   }
 }
