@@ -2,7 +2,6 @@
 require('dotenv').config();
 const fs = require('fs');
 const puppeteer = require('puppeteer-core');
-const { executablePath } = require('puppeteer');
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 const videos = fs.readFileSync('videos.txt', 'utf-8').split('\n').filter(Boolean);
@@ -13,8 +12,17 @@ const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 300);
 (async () => {
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: executablePath(),
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-extensions'
+    ]
   });
 
   const page = await browser.newPage();
@@ -30,4 +38,5 @@ const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 300);
 
   await delay(watchTime * 1000);
   await browser.close();
-  console.log(`[✅] View
+  console.log(`[✅] View completed!`);
+})();
