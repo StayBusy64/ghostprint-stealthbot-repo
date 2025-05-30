@@ -1,6 +1,5 @@
 [build]
 builder = "NIXPACKS"
-watchPatterns = ["*.js", "*.json", "*.html", "*.cjs"]
 
 [start]
 cmd = "node scheduler.cjs"
@@ -12,7 +11,6 @@ nixPkgs = [
   "freetype",
   "harfbuzz",
   "ca-certificates",
-  "ttf-font-awesome",
   "glib",
   "nss",
   "alsa-lib",
@@ -24,5 +22,6 @@ nixPkgs = [
   "gtk3"
 ]
 
-[phases.install]
-cmds = ["npm install"]
+[env]
+PUPPETEER_EXECUTABLE_PATH = "/nix/store/*chromium*/bin/chromium"
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
