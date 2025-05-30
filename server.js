@@ -1,56 +1,56 @@
+// server.js
 const express = require('express');
-const axios = require('axios');
-const fs = require('fs');
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const app = express();
+
 const PORT = process.env.PORT || 3000;
+const RUN_INTERVAL = parseInt(process.env.RUN_INTERVAL || 300000); // 5 minutes default
 
-const VERSION_LOG = './version.log';
-const VERIFY_LOG = './verify-log.json';
-const SYNC_URL = process.env.ZIP_SYNC_URL || 'https://yourdomain.com/your-latest.zip';
-
-app.get('/', (req, res) => res.send('🧠 GhostPrint StealthBot Hybrid Deploy is live.'));
-
-app.get('/version', (req, res) => {
-  if (!fs.existsSync(VERSION_LOG)) return res.send("No version log yet.");
-  const log = fs.readFileSync(VERSION_LOG, 'utf-8').split('\n').filter(Boolean).slice(-5).reverse();
-  res.send(`<pre>${log.join('\n')}</pre>`);
+// Simple health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'Ghost bot is running',
+    interval: `${RUN_INTERVAL / 1000} seconds`,
+    nextRun: new Date(Date.now() + timeUntilNext).toISOString()
+  });
 });
 
-app.get('/sync', async (req, res) => {
-  const filename = 'update.zip';
-  const path = `./${filename}`;
+let timeUntilNext = RUN_INTERVAL;
 
-  try {
-    const writer = fs.createWriteStream(path);
-    const response = await axios({ method: 'get', url: SYNC_URL, responseType: 'stream' });
-    response.data.pipe(writer);
+// Function to run the ghost bot
+function runGhostBot() {
+  console.log(`[🚀] Starting ghost bot at ${new Date().toISOString()}`);
+  
+  const ghostBot = spawn('node', ['ghostbot.js']);
+  
+  ghostBot.stdout.on('data', (data) => {
+    console.log(`${data}`);
+  });
+  
+  ghostBot.stderr.on('data', (data) => {
+    console.error(`Error: ${data}`);
+  });
+  
+  ghostBot.on('close', (code) => {
+    console.log(`[🏁] Ghost bot finished with code ${code}`);
+    timeUntilNext = RUN_INTERVAL;
+  });
+}
 
-    writer.on('finish', () => {
-      exec(`unzip -o ${filename}`, (err, stdout, stderr) => {
-        if (err) return res.send('❌ Unzip failed: ' + stderr);
+// Run immediately on start
+runGhostBot();
 
-        const timestamp = new Date().toISOString();
-        fs.appendFileSync(VERSION_LOG, `✅ Sync at ${timestamp}\n`);
-        res.send(`✅ Updated bot from ZIP at ${timestamp}`);
-      });
-    });
+// Schedule periodic runs
+setInterval(() => {
+  runGhostBot();
+}, RUN_INTERVAL);
 
-    writer.on('error', () => res.send('❌ Failed to download ZIP.'));
-  } catch (e) {
-    res.send('❌ Sync failed: ' + e.message);
-  }
+// Update countdown
+setInterval(() => {
+  timeUntilNext = Math.max(0, timeUntilNext - 1000);
+}, 1000);
+
+app.listen(PORT, () => {
+  console.log(`[🌐] Server running on port ${PORT}`);
+  console.log(`[⏰] Ghost bot will run every ${RUN_INTERVAL / 1000} seconds`);
 });
-
-app.get('/verify-log', (req, res) => {
-  if (!fs.existsSync(VERIFY_LOG)) return res.send("No verifier logs yet.");
-  const data = fs.readFileSync(VERIFY_LOG, 'utf-8');
-  try {
-    const parsed = JSON.parse(data);
-    res.json(parsed.slice(-10).reverse());
-  } catch {
-    res.send("❌ Log corrupt or unreadable.");
-  }
-});
-
-app.listen(PORT, () => console.log(`🧠 GhostPrint running at http://localhost:${PORT}`));
