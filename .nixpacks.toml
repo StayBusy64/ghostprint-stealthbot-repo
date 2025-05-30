@@ -1,22 +1,28 @@
-[variables]
-NIXPACKS_NO_MUSL = "1"
+[build]
+builder = "NIXPACKS"
+watchPatterns = ["*.js", "*.json", "*.html", "*.cjs"]
+
+[start]
+cmd = "node scheduler.cjs"
 
 [phases.setup]
 nixPkgs = [
-  "nodejs-18_x",
+  "nodejs_20",
   "chromium",
-  "nss",
   "freetype",
   "harfbuzz",
   "ca-certificates",
-  "ttf-freefont"
+  "ttf-font-awesome",
+  "glib",
+  "nss",
+  "alsa-lib",
+  "fontconfig",
+  "libxcomposite",
+  "libxdamage",
+  "libxrandr",
+  "libxcb",
+  "gtk3"
 ]
 
 [phases.install]
-cmds = ["npm ci --only=production"]
-
-[phases.build]
-cmds = ["echo 'No build step required'"]
-
-[start]
-cmd = "node server.js"
+cmds = ["npm install"]
