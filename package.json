@@ -1,16 +1,13 @@
 {
-  "name": "ghostbot",
+  "name": "ghostprint-stealthbot",
   "version": "1.0.0",
-  "description": "Ghost viewer bot",
-  "main": "ghostbot.js",
+  "description": "Puppeteer benchmarking & testing bot",
+  "main": "server.js",
   "scripts": {
-    "start": "node ghostbot.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.0.0",
     "puppeteer-core": "^21.0.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
