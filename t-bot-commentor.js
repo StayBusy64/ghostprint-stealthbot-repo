@@ -11,27 +11,23 @@ puppeteer.use(StealthPlugin())
 const delay = (ms) => new Promise((res) => setTimeout(res, ms))
 const videos = fs.readFileSync('videos.txt', 'utf-8').split('\n').filter(Boolean)
 
-// 🔁 Comment bank: feel free to expand this
 const comments = [
-  "This one hit different 🔥",
-  "Crazy how underrated this is",
-  "Back again, still a banger.",
-  "This needs way more views",
-  "StayBusy64 never misses!",
-  "A hidden gem on YouTube fr"
+  "Insane. Deserves way more views.",
+  "This needs to blow up 🔥🔥🔥",
+  "Underrated masterpiece fr",
+  "Another one from StayBusy64?? I'm locked in.",
+  "Popped up on my recs — glad it did",
+  "Vibes on another level"
 ]
 
 const WATCH_TIME_MIN = parseInt(process.env.WATCH_TIME_MIN || 40)
 const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 180)
 
-function typeLikeHuman(page, selector, message) {
-  return new Promise(async (res) => {
-    for (let char of message) {
-      await page.type(selector, char)
-      await delay(50 + Math.random() * 100)
-    }
-    res()
-  })
+async function typeLikeHuman(page, selector, text) {
+  for (let char of text) {
+    await page.type(selector, char)
+    await delay(40 + Math.random() * 90)
+  }
 }
 
 ;(async () => {
@@ -55,16 +51,15 @@ function typeLikeHuman(page, selector, message) {
   await injectEntropy(page)
 
   const watchTimeSec = Math.floor(Math.random() * (WATCH_TIME_MAX - WATCH_TIME_MIN + 1)) + WATCH_TIME_MIN
-  console.log(`[⏳ Watch time before comment] ${watchTimeSec}s`)
+  console.log(`[⏱️ Watch time before comment] ${watchTimeSec}s`)
   await delay(watchTimeSec * 1000)
 
   try {
-    await page.evaluate(() => window.scrollBy(0, document.body.scrollHeight)) // scroll to comment section
+    await page.evaluate(() => window.scrollBy(0, document.body.scrollHeight))
     await delay(4000)
 
-    const commentBtnSelector = 'ytd-comment-simplebox-renderer'
-    await page.waitForSelector(commentBtnSelector, { timeout: 10000 })
-    await page.click(commentBtnSelector)
+    await page.waitForSelector('ytd-comment-simplebox-renderer', { timeout: 10000 })
+    await page.click('ytd-comment-simplebox-renderer')
     await delay(1000)
 
     const inputSelector = '#contenteditable-root'
@@ -72,8 +67,7 @@ function typeLikeHuman(page, selector, message) {
     await typeLikeHuman(page, inputSelector, randomComment)
     await delay(1000)
 
-    const submitButton = '#submit-button'
-    await page.click(submitButton)
+    await page.click('#submit-button')
     console.log(`[✅ Comment Posted] "${randomComment}"`)
   } catch (err) {
     console.warn('[⚠️ Comment Failed]', err.message)
