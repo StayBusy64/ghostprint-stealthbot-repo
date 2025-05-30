@@ -1,15 +1,17 @@
 // ghostbot.js
-require('dotenv').config();
-const fs = require('fs');
-const puppeteer = require('puppeteer-core');
 
-const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-const videos = fs.readFileSync('videos.txt', 'utf-8').split('\n').filter(Boolean);
+const injectEntropy = require('./entropy-injector')
+require('dotenv').config()
+const fs = require('fs')
+const puppeteer = require('puppeteer-core')
 
-const WATCH_TIME_MIN = parseInt(process.env.WATCH_TIME_MIN || 45);
-const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 300);
+const delay = (ms) => new Promise((res) => setTimeout(res, ms))
+const videos = fs.readFileSync('videos.txt', 'utf-8').split('\n').filter(Boolean)
 
-(async () => {
+const WATCH_TIME_MIN = parseInt(process.env.WATCH_TIME_MIN || 45)
+const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 300)
+
+;(async () => {
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/chromium/bin/chromium',
@@ -22,20 +24,20 @@ const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 300);
       '--no-zygote',
       '--disable-extensions'
     ]
-  });
+  })
 
-  const page = await browser.newPage();
+  const page = await browser.newPage()
 
-  const url = videos[Math.floor(Math.random() * videos.length)];
-  console.log(`[👻] Ghosting view: ${url}`);
+  const url = videos[Math.floor(Math.random() * videos.length)]
+  console.log(`[👻 Ghosting viewer] View: ${url}`)
+  await page.goto(url, { waitUntil: 'networkidle2' })
 
-  await page.setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1");
-  await page.goto(url, { waitUntil: 'networkidle2' });
+  await injectEntropy(page)
 
-  const watchTime = Math.floor(Math.random() * (WATCH_TIME_MAX - WATCH_TIME_MIN + 1)) + WATCH_TIME_MIN;
-  console.log(`[⏱] Watching for ${watchTime} seconds...`);
+  const watchTimeSec = Math.floor(Math.random() * (WATCH_TIME_MAX - WATCH_TIME_MIN + 1)) + WATCH_TIME_MIN
+  console.log(`[🕒 Watch time] ${watchTimeSec}s`)
+  await delay(watchTimeSec * 1000)
 
-  await delay(watchTime * 1000);
-  await browser.close();
-  console.log(`[✅] View completed!`);
-})();
+  await browser.close()
+  console.log('[✅ Session Ended]')
+})()
