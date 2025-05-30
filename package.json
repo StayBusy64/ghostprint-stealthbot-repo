@@ -4,13 +4,12 @@
   "description": "GhostPrint T-BOTS for StayBusy64",
   "main": "ghostbot.js",
   "scripts": {
-    "start": "node ghostbot.js"
+    "start": "node t-bot-core.js"
   },
-  "type": "module",
   "dependencies": {
+    "dotenv": "^16.3.1",
     "puppeteer-core": "^21.3.8",
     "puppeteer-extra": "^3.3.4",
-    "puppeteer-extra-plugin-stealth": "^2.11.1",
-    "dotenv": "^16.3.1"
+    "puppeteer-extra-plugin-stealth": "^2.11.1"
   }
 }
