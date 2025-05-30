@@ -9,7 +9,7 @@ async function loopGhostbot() {
   while (true) {
     console.log(`[Scheduler] Launching ghostbot.js @ ${new Date().toLocaleTimeString()}`)
 
-    const bot = spawn('node', ['ghostbot.js'], {
+    const bot = spawn('node', ['ghostbot.cjs'], {
       stdio: 'inherit',
       shell: true
     })
