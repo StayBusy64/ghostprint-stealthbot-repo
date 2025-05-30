@@ -1,8 +1,8 @@
 {
-  "name": "tbot-swarm",
+  "name": "ghostprint-stealthbot-repo",
   "version": "1.0.0",
-  "description": "GhostPrint T-BOTS for StayBusy64",
-  "main": "ghostbot.js",
+  "description": "Synthetic swarm controller and modules for StayBusy64 YouTube growth.",
+  "main": "t-bot-core.js",
   "scripts": {
     "start": "node t-bot-core.js"
   },
@@ -11,5 +11,14 @@
     "puppeteer-core": "^21.3.8",
     "puppeteer-extra": "^3.3.4",
     "puppeteer-extra-plugin-stealth": "^2.11.1"
-  }
+  },
+  "keywords": [
+    "youtube",
+    "bot",
+    "puppeteer",
+    "stealth",
+    "automation"
+  ],
+  "author": "StayBusy64",
+  "license": "MIT"
 }
