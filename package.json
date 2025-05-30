@@ -1,13 +1,28 @@
 {
   "name": "ghostprint-stealthbot",
   "version": "1.0.0",
-  "description": "Puppeteer benchmarking & testing bot",
-  "main": "server.js",
+  "description": "Autonomous stealthbot swarm for YouTube interaction and trend scraping.",
+  "main": "ghostbot.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node scheduler.js",
+    "bot": "node ghostbot.js",
+    "comment": "node commentbot.js",
+    "like": "node liker.js",
+    "sub": "node subbot.js",
+    "webhook": "node webhook.js"
   },
   "dependencies": {
     "dotenv": "^16.0.0",
-    "puppeteer-core": "^21.0.0"
-  }
+    "puppeteer-core": "^21.0.0",
+    "fs-extra": "^11.1.1"
+  },
+  "keywords": [
+    "stealthbot",
+    "puppeteer",
+    "youtube",
+    "automation",
+    "ghostprint"
+  ],
+  "author": "Mai_Nihguh",
+  "license": "MIT"
 }
