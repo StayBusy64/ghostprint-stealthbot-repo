@@ -1,56 +1,60 @@
-// server.js
-const express = require('express');
-const { spawn } = require('child_process');
-const app = express();
+require('dotenv').config();
+const puppeteer = require('puppeteer-core');
+const fs = require('fs');
 
-const PORT = process.env.PORT || 3000;
-const RUN_INTERVAL = parseInt(process.env.RUN_INTERVAL || 300000); // 5 minutes default
+// Max listeners patch (for Railway memory constraints)
+process.setMaxListeners(0);
 
-// Simple health check endpoint
-app.get('/', (req, res) => {
-  res.json({ 
-    status: 'Ghost bot is running',
-    interval: `${RUN_INTERVAL / 1000} seconds`,
-    nextRun: new Date(Date.now() + timeUntilNext).toISOString()
-  });
-});
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
-let timeUntilNext = RUN_INTERVAL;
+(async () => {
+  try {
+    const browser = await puppeteer.launch({
+      headless: true,
+      executablePath: process.env.CHROME_PATH || '/nix/store/*-chromium-*/bin/chromium',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-extensions',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
+      ]
+    });
 
-// Function to run the ghost bot
-function runGhostBot() {
-  console.log(`[🚀] Starting ghost bot at ${new Date().toISOString()}`);
-  
-  const ghostBot = spawn('node', ['ghostbot.js']);
-  
-  ghostBot.stdout.on('data', (data) => {
-    console.log(`${data}`);
-  });
-  
-  ghostBot.stderr.on('data', (data) => {
-    console.error(`Error: ${data}`);
-  });
-  
-  ghostBot.on('close', (code) => {
-    console.log(`[🏁] Ghost bot finished with code ${code}`);
-    timeUntilNext = RUN_INTERVAL;
-  });
-}
+    const page = await browser.newPage();
 
-// Run immediately on start
-runGhostBot();
+    await page.setViewport({ width: 1280, height: 720 });
+    await page.setRequestInterception(true);
 
-// Schedule periodic runs
-setInterval(() => {
-  runGhostBot();
-}, RUN_INTERVAL);
+    page.on('request', (req) => {
+      // Block unnecessary resources for performance testing
+      if (['stylesheet', 'image', 'font'].includes(req.resourceType())) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
 
-// Update countdown
-setInterval(() => {
-  timeUntilNext = Math.max(0, timeUntilNext - 1000);
-}, 1000);
+    const videos = fs.readFileSync('videos.txt', 'utf-8').split('\n').filter(Boolean);
+    const url = videos[Math.floor(Math.random() * videos.length)];
 
-app.listen(PORT, () => {
-  console.log(`[🌐] Server running on port ${PORT}`);
-  console.log(`[⏰] Ghost bot will run every ${RUN_INTERVAL / 1000} seconds`);
-});
+    console.log(`[🎯] Navigating to: ${url}`);
+    await page.goto(url, { waitUntil: 'networkidle2' });
+
+    await delay(5000); // Wait for page settle
+
+    console.log(`[✅] Benchmark complete`);
+    await browser.close();
+  } catch (err) {
+    console.error(`[❌] Error:`, err);
+    process.exit(1);
+  }
+})();
