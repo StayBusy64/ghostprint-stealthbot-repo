@@ -1,20 +1,16 @@
 // phantomdroid.js
+require('dotenv').config();
+const fs = require('fs');
+const puppeteer = require('puppeteer-core');
+const injectEntropy = require('./entropy-injector');
 
-require('dotenv').config()
-const fs = require('fs')
-const puppeteer = require('puppeteer-extra')
-const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-const injectEntropy = require('./entropy-injector')
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+const videos = fs.readFileSync('videos.txt', 'utf-8').split('\n').filter(Boolean);
 
-puppeteer.use(StealthPlugin())
+const WATCH_TIME_MIN = parseInt(process.env.WATCH_TIME_MIN || 45);
+const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 180);
 
-const delay = (ms) => new Promise((res) => setTimeout(res, ms))
-const videos = fs.readFileSync('videos.txt', 'utf-8').split('\n').filter(Boolean)
-
-const WATCH_TIME_MIN = parseInt(process.env.WATCH_TIME_MIN || 60)
-const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 240)
-
-;(async () => {
+(async () => {
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/chromium/bin/chromium',
@@ -23,33 +19,23 @@ const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 240)
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
-      '--window-size=390,844' // Android phone resolution
+      '--window-size=375,667',
+      '--user-agent=Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36'
     ]
-  })
+  });
 
-  const page = await browser.newPage()
+  const page = await browser.newPage();
+  const url = videos[Math.floor(Math.random() * videos.length)];
+  console.log(`[PHANTOMDROID] Watching mobile: ${url}`);
+  await page.goto(url, { waitUntil: 'networkidle2' });
+  await injectEntropy(page);
 
-  await page.setUserAgent(
-    'Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Mobile Safari/537.36'
-  )
+  const watchTimeSec = Math.floor(Math.random() * (WATCH_TIME_MAX - WATCH_TIME_MIN + 1)) + WATCH_TIME_MIN;
+  console.log(`[PHANTOMDROID] Mobile watch duration: ${watchTimeSec}s`);
+  await delay(watchTimeSec * 1000);
 
-  await page.setViewport({
-    width: 390,
-    height: 844,
-    isMobile: true,
-    hasTouch: true
-  })
+  const logLine = `[${new Date().toISOString()}] Bot: phantomdroid | Video: ${url} | WatchTime: ${watchTimeSec}s\n`;
+  fs.appendFileSync('logs/swarm.log', logLine);
 
-  const url = videos[Math.floor(Math.random() * videos.length)]
-  console.log(`[📱 PHANTOMDROID] Watching: ${url}`)
-  await page.goto(url, { waitUntil: 'networkidle2' })
-
-  await injectEntropy(page)
-
-  const watchTimeSec = Math.floor(Math.random() * (WATCH_TIME_MAX - WATCH_TIME_MIN + 1)) + WATCH_TIME_MIN
-  console.log(`[🕒 Watch time] ${watchTimeSec}s`)
-  await delay(watchTimeSec * 1000)
-
-  await browser.close()
-  console.log('[✅ Mobile Session Complete]')
-})()
+  await browser.close();
+})();
