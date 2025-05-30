@@ -1,22 +1,37 @@
 // trend-sniper.js
-const axios = require('axios');
-const fs = require('fs');
-const cheerio = require('cheerio');
 
-(async () => {
-  const { data } = await axios.get('https://www.youtube.com/feed/trending');
-  const $ = cheerio.load(data);
-  const links = [];
+const fs = require('fs')
+const puppeteer = require('puppeteer-extra')
+const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+require('dotenv').config()
 
-  $('a#video-title').each((_, el) => {
-    const href = $(el).attr('href');
-    if (href && href.includes('watch')) {
-      links.push(`https://www.youtube.com${href}`);
-    }
-  });
+puppeteer.use(StealthPlugin())
 
-  const top10 = [...new Set(links)].slice(0, 10);
-  fs.writeFileSync('videos.txt', top10.join('\n'));
+const CHANNEL_URL = process.env.CHANNEL_URL || 'https://www.youtube.com/@StayBusy64/videos'
+const MAX_VIDEOS = parseInt(process.env.MAX_VIDEOS || 5)
 
-  console.log(`[🎯] Trending videos loaded into videos.txt:\n`, top10);
-})();
+;(async () => {
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath: '/nix/store/chromium/bin/chromium',
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  })
+
+  const page = await browser.newPage()
+  await page.goto(CHANNEL_URL, { waitUntil: 'networkidle2' })
+
+  await page.waitForSelector('ytd-grid-video-renderer', { timeout: 15000 })
+
+  const videoLinks = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('ytd-grid-video-renderer a#video-title'))
+      .map(el => el.href)
+      .filter(Boolean)
+  })
+
+  const selected = videoLinks.slice(0, MAX_VIDEOS)
+  fs.writeFileSync('videos.txt', selected.join('\n'), 'utf-8')
+
+  console.log(`[📦 Sniper] Updated videos.txt with ${selected.length} videos.`)
+
+  await browser.close()
+})()
