@@ -1,18 +1,16 @@
 {
-  "name": "ghostprint-stealthbot",
+  "name": "ghostbot",
   "version": "1.0.0",
-  "description": "Autonomous Puppeteer swarm for GhostPrint",
-  "main": "scheduler.js",
+  "description": "Ghost viewer bot",
+  "main": "ghostbot.js",
   "scripts": {
-    "start": "node scheduler.js"
+    "start": "node ghostbot.js"
   },
   "dependencies": {
-    "puppeteer": "22.8.2",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.0.3",
+    "puppeteer-core": "^21.0.0"
   },
   "engines": {
-    "node": ">=18"
-  },
-  "author": "StayBusy64",
-  "license": "MIT"
+    "node": ">=18.0.0"
+  }
 }
