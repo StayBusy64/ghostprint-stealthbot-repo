@@ -1,3 +1,4 @@
+// ghostbot.js
 require('dotenv').config();
 const fs = require('fs');
 const puppeteer = require('puppeteer-core');
@@ -32,11 +33,10 @@ const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 300);
   await injectEntropy(page);
 
   const watchTimeSec = Math.floor(Math.random() * (WATCH_TIME_MAX - WATCH_TIME_MIN + 1)) + WATCH_TIME_MIN;
-  console.log(`[GHOSTBOT] Watch duration: ${watchTimeSec} sec`);
-
+  console.log(`[GHOSTBOT] Simulated watch duration: ${watchTimeSec}s`);
   await delay(watchTimeSec * 1000);
-  
-  const logLine = `${new Date().toISOString()} | Bot: ghostbot | Video: ${url} | WatchTime: ${watchTimeSec} sec\n`;
+
+  const logLine = `[${new Date().toISOString()}] Bot: ghostbot | Video: ${url} | WatchTime: ${watchTimeSec}s\n`;
   fs.appendFileSync('logs/swarm.log', logLine);
 
   await browser.close();
