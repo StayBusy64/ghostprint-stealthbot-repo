@@ -12,7 +12,7 @@ const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 300);
 (async () => {
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
+    executablePath: '/nix/store/chromium/bin/chromium',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -20,7 +20,6 @@ const WATCH_TIME_MAX = parseInt(process.env.WATCH_TIME_MAX || 300);
       '--disable-gpu',
       '--no-first-run',
       '--no-zygote',
-      '--single-process',
       '--disable-extensions'
     ]
   });
