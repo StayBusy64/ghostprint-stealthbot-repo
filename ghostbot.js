@@ -1,3 +1,5 @@
+const injectEntropy = require('./entropy-injector')
+
 // ghostbot.js
 require('dotenv').config();
 const fs = require('fs');
