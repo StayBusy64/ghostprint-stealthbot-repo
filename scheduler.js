@@ -1,46 +1,34 @@
-// scheduler.js
-require('dotenv').config();
-const { exec } = require('child_process');
+require('dotenv').config()
+const { spawn } = require('child_process')
 
-// Define each module and its optional custom loop range (in minutes)
-const modules = [
-  { name: 'ghostbot.js', min: 3, max: 8 },
-  { name: 'commentbot.js', min: 5, max: 10 },
-  { name: 'liker.js', min: 7, max: 12 },
-  { name: 'subbot.js', min: 10, max: 15 },
-  { name: 'trend-sniper.js', min: 15, max: 25 },
-  { name: 'webhook.js', min: 2, max: 5 }
-];
-
-// Randomized delay function
-function getRandomDelay(min, max) {
-  const minutes = Math.floor(Math.random() * (max - min + 1)) + min;
-  console.log(`[⏱] Next "${this}" run in ${minutes} minutes...\n`);
-  return minutes * 60 * 1000;
+function randomDelay(min = 60000, max = 300000) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-// Repeating loop for each module
-function scheduleModule(module) {
-  const { name, min, max } = module;
+async function loopGhostbot() {
+  while (true) {
+    console.log(`[Scheduler] Launching ghostbot.js @ ${new Date().toLocaleTimeString()}`)
 
-  const run = () => {
-    console.log(`[🧠] Running ${name}...`);
-    exec(`node ${name}`, (err, stdout, stderr) => {
-      if (err) {
-        console.error(`[💥] ${name} failed: ${err.message}`);
-      } else {
-        if (stdout) console.log(stdout);
-        if (stderr) console.error(stderr);
-      }
+    const bot = spawn('node', ['ghostbot.js'], {
+      stdio: 'inherit',
+      shell: true
+    })
 
-      // Schedule next loop
-      setTimeout(run, getRandomDelay.call(name, min, max));
-    });
-  };
+    await new Promise(resolve => {
+      bot.on('exit', code => {
+        console.log(`[Scheduler] ghostbot.js exited with code ${code}`)
+        resolve()
+      })
+    })
 
-  run(); // Initial run
+    const waitTime = randomDelay(
+      process.env.MIN_DELAY ? parseInt(process.env.MIN_DELAY) : 90000,
+      process.env.MAX_DELAY ? parseInt(process.env.MAX_DELAY) : 300000
+    )
+
+    console.log(`[Scheduler] Waiting ${(waitTime / 1000 / 60).toFixed(1)} min before next run...\n`)
+    await new Promise(resolve => setTimeout(resolve, waitTime))
+  }
 }
 
-console.log(`[🔁] Multi-bot Scheduler initialized (${modules.length} modules spinning up...)\n`);
-
-modules.forEach(scheduleModule);
+loopGhostbot()
