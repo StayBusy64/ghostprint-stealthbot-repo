@@ -6,22 +6,25 @@ cmd = "node scheduler.cjs"
 
 [phases.setup]
 nixPkgs = [
-  "nodejs_20",
   "chromium",
   "freetype",
-  "harfbuzz",
-  "ca-certificates",
+  "fontconfig",
   "glib",
   "nss",
   "alsa-lib",
-  "fontconfig",
+  "harfbuzz",
+  "ttf-dejavu",
+  "ttf-font-awesome",
+  "gtk3",
   "libxcomposite",
   "libxdamage",
   "libxrandr",
-  "libxcb",
-  "gtk3"
+  "libxcb"
 ]
 
+[phases.install]
+cmds = ["npm install"]
+
 [env]
-PUPPETEER_EXECUTABLE_PATH = "/nix/store/*chromium*/bin/chromium"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
