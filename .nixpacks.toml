@@ -1,25 +1,25 @@
 [build]
 builder = "NIXPACKS"
-
-[start]
 cmd = "node scheduler.cjs"
 
 [phases.setup]
 nixPkgs = [
   "chromium",
-  "freetype",
-  "fontconfig",
-  "glib",
   "nss",
   "alsa-lib",
   "harfbuzz",
-  "ttf-dejavu",
   "ttf-font-awesome",
-  "gtk3",
-  "libxcomposite",
+  "ttf-dejavu",
+  "freetype",
+  "glib",
   "libxdamage",
+  "libxcomposite",
   "libxrandr",
-  "libxcb"
+  "libxcb",
+  "libx11",
+  "libxext",
+  "fontconfig",
+  "gtk3"
 ]
 
 [phases.install]
