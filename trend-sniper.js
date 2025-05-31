@@ -1,37 +1,34 @@
 // trend-sniper.js
+const fs = require("fs");
+const axios = require("axios");
+const cheerio = require("cheerio");
 
-const fs = require('fs')
-const puppeteer = require('puppeteer-extra')
-const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-require('dotenv').config()
+const OUTPUT_FILE = "Videos.txt";
+const YT_TRENDING_URL = "https://www.youtube.com/feed/trending";
 
-puppeteer.use(StealthPlugin())
+async function scrapeTrendingVideos() {
+  try {
+    const { data: html } = await axios.get(YT_TRENDING_URL, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
 
-const CHANNEL_URL = process.env.CHANNEL_URL || 'https://www.youtube.com/@StayBusy64/videos'
-const MAX_VIDEOS = parseInt(process.env.MAX_VIDEOS || 5)
+    const $ = cheerio.load(html);
+    const videoLinks = new Set();
 
-;(async () => {
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: '/nix/store/chromium/bin/chromium',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  })
+    $("a").each((_, element) => {
+      const href = $(element).attr("href");
+      if (href && href.startsWith("/watch?v=")) {
+        const fullUrl = `https://www.youtube.com${href.split("&")[0]}`;
+        videoLinks.add(fullUrl);
+      }
+    });
 
-  const page = await browser.newPage()
-  await page.goto(CHANNEL_URL, { waitUntil: 'networkidle2' })
+    const uniqueVideos = Array.from(videoLinks).slice(0, 15);
+    fs.writeFileSync(OUTPUT_FILE, uniqueVideos.join("\n"));
+    console.log(`[Trend Sniper] Seeded ${uniqueVideos.length} trending URLs.`);
+  } catch (err) {
+    console.error("[Trend Sniper] Scrape failed:", err.message);
+  }
+}
 
-  await page.waitForSelector('ytd-grid-video-renderer', { timeout: 15000 })
-
-  const videoLinks = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll('ytd-grid-video-renderer a#video-title'))
-      .map(el => el.href)
-      .filter(Boolean)
-  })
-
-  const selected = videoLinks.slice(0, MAX_VIDEOS)
-  fs.writeFileSync('videos.txt', selected.join('\n'), 'utf-8')
-
-  console.log(`[📦 Sniper] Updated videos.txt with ${selected.length} videos.`)
-
-  await browser.close()
-})()
+scrapeTrendingVideos();
