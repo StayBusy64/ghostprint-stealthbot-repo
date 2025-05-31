@@ -1,9 +1,10 @@
 [build]
-  builder = "NIXPACKS"
-  cmd = "node scheduler.cjs"
+builder = "NIXPACKS"
+cmd = "node scheduler.cjs"
 
 [phases.setup]
 nixPkgs = [
+  "nodejs",
   "chromium",
   "nss",
   "alsa-lib",
@@ -17,7 +18,8 @@ nixPkgs = [
   "libxrandr",
   "libxslt",
   "libx11",
-  "libxtst",
+  "libxcb",
+  "libxext",
   "fontconfig",
   "gtk3"
 ]
