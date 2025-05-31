@@ -1,45 +1,56 @@
+<!-- loopdash.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Loopdash - T-BOT Swarm Monitor</title>
+  <title>GhostPrint LoopDash</title>
   <style>
-    body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
-    h1 { color: #f0f; }
-    pre { background: #222; padding: 15px; border-radius: 8px; overflow-x: auto; }
-    .timestamp { color: #999; }
-    .bot { color: #0ff; }
-    .video { color: #ff0; }
-    .watch { color: #0f0; }
+    body {
+      font-family: monospace;
+      background: #0f0f0f;
+      color: #00ff99;
+      padding: 20px;
+    }
+    h1 {
+      color: #fff;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .video-list {
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+    .video-list a {
+      color: #00ff99;
+      text-decoration: none;
+    }
+    .video-list a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <h1>🌀 LOOPDASH - T-BOT Swarm Log</h1>
-  <pre id="logOutput">Loading logs...</pre>
+  <h1>👁️ GhostPrint LoopDash</h1>
+  <p>Status: Online. Swarm initialized.</p>
+
+  <div class="video-list" id="videoList">
+    <strong>Loading videos from Videos.txt...</strong>
+  </div>
 
   <script>
-    async function fetchLogs() {
-      try {
-        const res = await fetch('/logs/swarm.log');
-        const text = await res.text();
-        const lines = text.trim().split('\n').reverse().slice(0, 50);
-        document.getElementById('logOutput').innerHTML = lines.map(formatLine).join('\n');
-      } catch (e) {
-        document.getElementById('logOutput').innerText = 'Error loading logs.';
-      }
-    }
-
-    function formatLine(line) {
-      return line
-        .replace(/\[(.*?)\]/g, '<span class="timestamp">[$1]</span>')
-        .replace(/Bot:\s(\w+)/, '<span class="bot">Bot: $1</span>')
-        .replace(/Video:\s(https:\/\/\S+)/, '<span class="video">Video: $1</span>')
-        .replace(/WatchTime:\s(\d+)s/, '<span class="watch">WatchTime: $1s</span>');
-    }
-
-    setInterval(fetchLogs, 5000);
-    fetchLogs();
+    fetch("Videos.txt")
+      .then((res) => res.text())
+      .then((text) => {
+        const container = document.getElementById("videoList");
+        const lines = text.split("\n").filter(Boolean);
+        container.innerHTML = lines.map(
+          (url, i) => `<div>[${i + 1}] <a href="${url}" target="_blank">${url}</a></div>`
+        ).join("");
+      })
+      .catch((err) => {
+        document.getElementById("videoList").innerText = "Failed to load Videos.txt.";
+        console.error(err);
+      });
   </script>
 </body>
 </html>
