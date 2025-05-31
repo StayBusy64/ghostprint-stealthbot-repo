@@ -1,17 +1,28 @@
-import axios from 'axios';
-import 'dotenv/config';
+// webhook.js
+const axios = require("axios");
+require("dotenv").config();
 
-const webhookURL = process.env.DISCORD_WEBHOOK;
+const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+const VIDEO_FILE = "Videos.txt";
 
-async function sendWebhook(message) {
-  try {
-    await axios.post(webhookURL, {
-      content: message
-    });
-    console.log('📡 Webhook sent!');
-  } catch (error) {
-    console.error('❌ Webhook failed:', error.message);
+function sendToDiscord(videoUrl) {
+  return axios.post(WEBHOOK_URL, {
+    content: `👻 **New View Triggered:** ${videoUrl}`,
+  });
+}
+
+async function pingWebhooks() {
+  const fs = require("fs");
+  const videos = fs.readFileSync(VIDEO_FILE, "utf-8").split("\n").filter(Boolean);
+
+  for (const url of videos) {
+    try {
+      await sendToDiscord(url);
+      console.log(`[Webhook Sent] ${url}`);
+    } catch (err) {
+      console.error(`[Webhook Failed] ${url} - ${err.message}`);
+    }
   }
 }
 
-sendWebhook(`[🚨] New video view cycle started at ${new Date().toLocaleTimeString()}`);
+pingWebhooks();
