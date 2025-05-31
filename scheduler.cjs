@@ -1,34 +1,38 @@
-require('dotenv').config()
-const { spawn } = require('child_process')
+// scheduler.cjs
+const { exec } = require("child_process");
+require("dotenv").config();
 
-function randomDelay(min = 60000, max = 300000) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
+const INTERVAL_MINUTES_MIN = parseInt(process.env.SCHEDULE_INTERVAL_MIN) || 20;
+const INTERVAL_MINUTES_MAX = parseInt(process.env.SCHEDULE_INTERVAL_MAX) || 45;
+
+function getRandomInterval() {
+  const range = INTERVAL_MINUTES_MAX - INTERVAL_MINUTES_MIN;
+  return (
+    Math.floor(Math.random() * (range + 1)) + INTERVAL_MINUTES_MIN
+  ) * 60 * 1000; // in milliseconds
 }
 
-async function loopGhostbot() {
-  while (true) {
-    console.log(`[Scheduler] Launching ghostbot.js @ ${new Date().toLocaleTimeString()}`)
+function launchGhostbot() {
+  const timestamp = new Date().toLocaleString();
+  console.log(`[Scheduler] Launching ghostbot.js @ ${timestamp}`);
 
-    const bot = spawn('node', ['ghostbot.cjs'], {
-      stdio: 'inherit',
-      shell: true
-    })
+  const process = exec("node ghostbot.js");
 
-    await new Promise(resolve => {
-      bot.on('exit', code => {
-        console.log(`[Scheduler] ghostbot.js exited with code ${code}`)
-        resolve()
-      })
-    })
+  process.stdout.on("data", (data) => {
+    process.stdout.write(`[ghostbot] ${data}`);
+  });
 
-    const waitTime = randomDelay(
-      process.env.MIN_DELAY ? parseInt(process.env.MIN_DELAY) : 90000,
-      process.env.MAX_DELAY ? parseInt(process.env.MAX_DELAY) : 300000
-    )
+  process.stderr.on("data", (data) => {
+    process.stderr.write(`[ghostbot:ERROR] ${data}`);
+  });
 
-    console.log(`[Scheduler] Waiting ${(waitTime / 1000 / 60).toFixed(1)} min before next run...\n`)
-    await new Promise(resolve => setTimeout(resolve, waitTime))
-  }
+  process.on("exit", (code) => {
+    const nextDelay = getRandomInterval();
+    console.log(`\n[Scheduler] ghostbot.js exited with code ${code}`);
+    console.log(`[Scheduler] Next run in ${(nextDelay / 60000).toFixed(1)} min\n`);
+    setTimeout(launchGhostbot, nextDelay); // loop again
+  });
 }
 
-loopGhostbot()
+// Run forever
+launchGhostbot();
