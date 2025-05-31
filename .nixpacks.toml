@@ -3,26 +3,7 @@ builder = "NIXPACKS"
 cmd = "node scheduler.cjs"
 
 [phases.setup]
-nixPkgs = [
-  "nodejs",
-  "chromium",
-  "nss",
-  "alsa-lib",
-  "harfbuzz",
-  "freetype",
-  "ttf-font-awesome",
-  "ttf-dejavu",
-  "glib",
-  "libxdamage",
-  "libxcomposite",
-  "libxrandr",
-  "libxslt",
-  "libx11",
-  "libxcb",
-  "libxext",
-  "fontconfig",
-  "gtk3"
-]
+nixPkgs = ["nodejs", "chromium"]
 
 [phases.install]
 cmds = ["npm install"]
