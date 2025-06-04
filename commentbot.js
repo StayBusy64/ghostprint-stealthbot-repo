@@ -1,17 +1,15 @@
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-puppeteer.use(StealthPlugin());
+const puppeteer = require('puppeteer-extra')
+const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+puppeteer.use(StealthPlugin())
 
-require('dotenv').config();
+require('dotenv').config()
+const videoUrl = process.env.TARGET_URL
+const username = process.env.YT_EMAIL
+const password = process.env.YT_PASSWORD
 
-const videoUrl = process.env.TARGET_URL;
-const username = process.env.YT_EMAIL;
-let password = process.env.YT_PASSWORD;
-
-// DEBUG CHECK
 if (!password || typeof password !== 'string') {
-    console.error('❌ YT_PASSWORD is missing or invalid!');
-    process.exit(1);
+    console.error('❌ YT_PASSWORD is missing or invalid!')
+    process.exit(1)
 }
 
 const comments = [
@@ -20,33 +18,37 @@ const comments = [
     "W vid, slept on fr.",
     "Algorithm needs to wake up on this.",
     "Sheeshh this heat different."
-];
+]
 
-(async () => {
-    const browser = await puppeteer.launch({ headless: false, args: ['--no-sandbox'] });
-    const page = await browser.newPage();
+;(async () => {
+    const browser = await puppeteer.launch({
+        headless: false,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
 
-    await page.goto('https://accounts.google.com/');
+    const page = await browser.newPage()
 
-    // Login
-    await page.type('input[type="email"]', username);
-    await page.click('#identifierNext');
-    await page.waitForTimeout(3000);
-    await page.type('input[type="password"]', password);
-    await page.click('#passwordNext');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
+    await page.goto('https://accounts.google.com/', { waitUntil: 'domcontentloaded' })
+    await page.waitForSelector('input[type="email"]', { timeout: 10000 })
+    await page.type('input[type="email"]', username)
+    await page.click('#identifierNext')
+    await page.waitForTimeout?.(3000) || await new Promise(r => setTimeout(r, 3000))
 
-    // Navigate to target
-    await page.goto(videoUrl, { waitUntil: 'networkidle2' });
+    await page.waitForSelector('input[type="password"]', { visible: true, timeout: 10000 })
+    await page.type('input[type="password"]', password)
+    const nextBtn = await page.$('#passwordNext')
+    if (nextBtn) await nextBtn.click()
 
-    // Leave comment
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-    await page.waitForSelector('ytd-comment-simplebox-renderer', { visible: true });
-    await page.click('ytd-comment-simplebox-renderer');
-    await page.type('ytd-comment-simplebox-renderer #contenteditable-root', comments[Math.floor(Math.random() * comments.length)]);
-    await page.click('#submit-button');
+    await page.waitForNavigation({ waitUntil: 'networkidle2' })
 
-    console.log('✅ Comment posted.');
+    await page.goto(videoUrl, { waitUntil: 'networkidle2' })
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight))
 
-    await browser.close();
-})();
+    await page.waitForSelector('ytd-comment-simplebox-renderer', { visible: true, timeout: 10000 })
+    await page.click('ytd-comment-simplebox-renderer')
+    await page.type('#contenteditable-root', comments[Math.floor(Math.random() * comments.length)])
+    await page.click('#submit-button')
+
+    console.log('✅ Comment posted successfully.')
+    await browser.close()
+})()
