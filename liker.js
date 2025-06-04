@@ -1,39 +1,50 @@
-// liker.js
-const puppeteer = require("puppeteer");
-const fs = require("fs");
-require("dotenv").config();
+// liker.js — Human-Mimic YouTube Like Bot
+require('dotenv').config();
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
-const VIDEO_FILE = "Videos.txt";
+puppeteer.use(StealthPlugin());
 
-async function likeVideo(url) {
-  const browser = await puppeteer.launch({
-    headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-  const page = await browser.newPage();
+const VIDEO_URL = process.env.TARGET_URL;
+const PROXY = process.env.PROXY;
 
-  try {
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+async function run() {
+    const args = [
+        '--no-sandbox',
+        '--disable-setuid-sandbox'
+    ];
+    if (PROXY) args.push(`--proxy-server=${PROXY}`);
 
-    // Wait for like button and click (generic selector, may need tuning)
-    await page.waitForSelector("ytd-toggle-button-renderer[is-icon-button]", { timeout: 5000 });
-    const buttons = await page.$$("ytd-toggle-button-renderer[is-icon-button]");
-    if (buttons.length > 0) {
-      await buttons[0].click();
-      console.log(`[Liked] ${url}`);
-    } else {
-      console.log(`[Like Skipped] ${url} - Button not found`);
+    const browser = await puppeteer.launch({
+        headless: true,
+        args
+    });
+    const page = await browser.newPage();
+
+    try {
+        console.log("📺 Opening video page...");
+        await page.goto(VIDEO_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+
+        await page.waitForSelector('ytd-toggle-button-renderer[is-icon-button]', { timeout: 15000 });
+
+        await page.evaluate(() => window.scrollBy(0, 500));
+        await page.waitForTimeout(3000); // simulate hesitation
+
+        const likeButton = await page.$('ytd-toggle-button-renderer[is-icon-button]');
+        if (likeButton) {
+            await likeButton.click();
+            console.log("👍 Video liked successfully.");
+        } else {
+            console.warn("❌ Like button not found.");
+        }
+
+        await page.waitForTimeout(2000);
+
+    } catch (err) {
+        console.error("🚫 liker.js failed:", err.message);
+    } finally {
+        await browser.close();
     }
-  } catch (err) {
-    console.error(`[Error] ${url} - ${err.message}`);
-  } finally {
-    await browser.close();
-  }
 }
 
-(async () => {
-  const links = fs.readFileSync(VIDEO_FILE, "utf-8").split("\n").filter(Boolean);
-  for (const link of links) {
-    await likeVideo(link);
-  }
-})();
+run();
