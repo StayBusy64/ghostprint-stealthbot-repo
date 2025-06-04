@@ -1,56 +1,52 @@
-// commentbot.js — AI-Powered YouTube Comment Poster
-require('dotenv').config();
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const fs = require('fs');
-const path = require('path');
-
 puppeteer.use(StealthPlugin());
 
-const EMAIL = process.env.YT_EMAIL;
-const PASSWORD = process.env.YT_PASSWORD;
-const TARGET_URL = process.env.TARGET_URL;
-const COMMENT_TEXT = process.env.COMMENT_TEXT || "🔥 Love this content. Thanks for sharing!";
-const PROXY = process.env.PROXY;
+require('dotenv').config();
 
-async function run() {
-    const args = [
-        '--no-sandbox',
-        '--disable-setuid-sandbox'
-    ];
-    if (PROXY) args.push(`--proxy-server=${PROXY}`);
+const videoUrl = process.env.TARGET_URL;
+const username = process.env.YT_EMAIL;
+let password = process.env.YT_PASSWORD;
 
-    const browser = await puppeteer.launch({ headless: true, args });
-    const page = await browser.newPage();
-
-    try {
-        console.log("🔐 Logging into YouTube...");
-        await page.goto('https://accounts.google.com/signin/v2/identifier', { waitUntil: 'networkidle2' });
-
-        await page.type('input[type="email"]', EMAIL, { delay: 80 });
-        await page.click('#identifierNext');
-        await page.waitForTimeout(2000);
-        await page.type('input[type="password"]', PASSWORD, { delay: 80 });
-        await page.click('#passwordNext');
-        await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-        console.log(`🧠 Navigating to video: ${TARGET_URL}`);
-        await page.goto(TARGET_URL, { waitUntil: 'networkidle2' });
-
-        await page.evaluate(() => window.scrollBy(0, 1000));
-        await page.waitForTimeout(2000);
-
-        await page.click('ytd-comments #placeholder-area');
-        await page.type('#contenteditable-root', COMMENT_TEXT, { delay: 60 });
-        await page.click('#submit-button');
-
-        console.log(`✅ Comment posted: "${COMMENT_TEXT}"`);
-
-    } catch (err) {
-        console.error("❌ Failed to post comment:", err.message);
-    } finally {
-        await browser.close();
-    }
+// DEBUG CHECK
+if (!password || typeof password !== 'string') {
+    console.error('❌ YT_PASSWORD is missing or invalid!');
+    process.exit(1);
 }
 
-run();
+const comments = [
+    "🔥 This deserves way more recognition.",
+    "Ain’t no way this isn’t viral yet.",
+    "W vid, slept on fr.",
+    "Algorithm needs to wake up on this.",
+    "Sheeshh this heat different."
+];
+
+(async () => {
+    const browser = await puppeteer.launch({ headless: false, args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+
+    await page.goto('https://accounts.google.com/');
+
+    // Login
+    await page.type('input[type="email"]', username);
+    await page.click('#identifierNext');
+    await page.waitForTimeout(3000);
+    await page.type('input[type="password"]', password);
+    await page.click('#passwordNext');
+    await page.waitForNavigation({ waitUntil: 'networkidle2' });
+
+    // Navigate to target
+    await page.goto(videoUrl, { waitUntil: 'networkidle2' });
+
+    // Leave comment
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+    await page.waitForSelector('ytd-comment-simplebox-renderer', { visible: true });
+    await page.click('ytd-comment-simplebox-renderer');
+    await page.type('ytd-comment-simplebox-renderer #contenteditable-root', comments[Math.floor(Math.random() * comments.length)]);
+    await page.click('#submit-button');
+
+    console.log('✅ Comment posted.');
+
+    await browser.close();
+})();
