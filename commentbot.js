@@ -1,43 +1,56 @@
-// commentbot.js
-const fs = require("fs");
-const path = require("path");
-const { Configuration, OpenAIApi } = require("openai");
-require("dotenv").config();
+// commentbot.js — AI-Powered YouTube Comment Poster
+require('dotenv').config();
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const fs = require('fs');
+const path = require('path');
 
-const config = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
-const openai = new OpenAIApi(config);
+puppeteer.use(StealthPlugin());
 
-const VIDEO_FILE = "Videos.txt";
-const COMMENT_FILE = "Comments.txt";
+const EMAIL = process.env.YT_EMAIL;
+const PASSWORD = process.env.YT_PASSWORD;
+const TARGET_URL = process.env.TARGET_URL;
+const COMMENT_TEXT = process.env.COMMENT_TEXT || "🔥 Love this content. Thanks for sharing!";
+const PROXY = process.env.PROXY;
 
-async function generateComment(title) {
-  const prompt = `Write a short, engaging YouTube comment that sounds like a real user reacting to a video titled: "${title}"`;
+async function run() {
+    const args = [
+        '--no-sandbox',
+        '--disable-setuid-sandbox'
+    ];
+    if (PROXY) args.push(`--proxy-server=${PROXY}`);
 
-  const res = await openai.createCompletion({
-    model: "text-davinci-003",
-    prompt,
-    max_tokens: 40,
-    temperature: 0.75,
-  });
+    const browser = await puppeteer.launch({ headless: true, args });
+    const page = await browser.newPage();
 
-  return res.data.choices[0].text.trim();
+    try {
+        console.log("🔐 Logging into YouTube...");
+        await page.goto('https://accounts.google.com/signin/v2/identifier', { waitUntil: 'networkidle2' });
+
+        await page.type('input[type="email"]', EMAIL, { delay: 80 });
+        await page.click('#identifierNext');
+        await page.waitForTimeout(2000);
+        await page.type('input[type="password"]', PASSWORD, { delay: 80 });
+        await page.click('#passwordNext');
+        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+
+        console.log(`🧠 Navigating to video: ${TARGET_URL}`);
+        await page.goto(TARGET_URL, { waitUntil: 'networkidle2' });
+
+        await page.evaluate(() => window.scrollBy(0, 1000));
+        await page.waitForTimeout(2000);
+
+        await page.click('ytd-comments #placeholder-area');
+        await page.type('#contenteditable-root', COMMENT_TEXT, { delay: 60 });
+        await page.click('#submit-button');
+
+        console.log(`✅ Comment posted: "${COMMENT_TEXT}"`);
+
+    } catch (err) {
+        console.error("❌ Failed to post comment:", err.message);
+    } finally {
+        await browser.close();
+    }
 }
 
-async function injectComments() {
-  const videos = fs.readFileSync(path.resolve(__dirname, VIDEO_FILE), "utf-8").split("\n").filter(Boolean);
-  const outStream = fs.createWriteStream(COMMENT_FILE, { flags: "a" });
-
-  for (const url of videos) {
-    const videoTitle = url.split("v=")[1] || url;
-    const comment = await generateComment(videoTitle);
-    outStream.write(`${url} -> ${comment}\n`);
-    console.log(`[Commented] ${url} => "${comment}"`);
-  }
-
-  outStream.end();
-}
-
-injectComments().catch(err => {
-  console.error("[CommentBot] Error:", err.message);
-  process.exit(1);
-});
+run();
